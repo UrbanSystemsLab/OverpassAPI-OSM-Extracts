@@ -1,7 +1,8 @@
 # overpass-api-tiles
 Mbtiles generator using OSM data from Overpass-API
 
-### Scripts
+### Directory Structure
+*Create the necessary folders as below*
 ```
 Root
 |--osm        # Download directory for .osm files
