@@ -26,7 +26,7 @@ You can serve these tiles using `tileserver-gl-light`
 
 ### Tile Downloader Process
 Just a visual reference of how sequence of how tiles are downloaded
-![tile-download.png](img\tile-download.png)
+![tile-download.png](img/tile-download.png)
 
 ### TODO
 - Combine download.js and download-limit.js
