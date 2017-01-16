@@ -1,3 +1,8 @@
+#data
+geojson/*.*
+mbtiles/*.*
+osm/*.*
+
 # Logs
 logs
 *.log
