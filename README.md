@@ -20,9 +20,12 @@ Root
 - The script will hit rate limit couple of times and download 0kb tiles. Run `node download-limit.js` till all tiles have been downloaded.
 - Run `node osm-to-geojson.js` to convert .osm to .geojson files
 - Run `node geojson-merge.js` to merge .geojson files into single file
-- The final output will be a single .mbtile in `\mbtiles` folder
+- The final output will be a single .geojson in `mbtiles\output.geojson`
+- Use [tippecanoe](https://github.com/mapbox/tippecanoe) to convert the output.geojson to a single .mbtile
 
-You can serve these tiles using `tileserver-gl-light`
+`tippecanoe -z 14 -Z 14 -pk -pf -f -o map.mbtiles output.geojson`
+
+You can serve these tiles using [tileserver-gl](https://github.com/klokantech/tileserver-gl)
 
 
 ### Tile Downloader Process
