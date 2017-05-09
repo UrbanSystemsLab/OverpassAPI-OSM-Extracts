@@ -13,6 +13,7 @@
     "single-line-log": "^1.1.2",
     "stream-concat": "^0.1.0",
     "through2": "^2.0.3",
-    "osmtogeojson": "^3.0.0-beta.0"
+    "osmtogeojson": "^3.0.0-beta.0",
+    "stream-concat": "^0.1.0"
   }
 }
