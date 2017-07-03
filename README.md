@@ -23,10 +23,8 @@ Root
 - The final output will be a single .geojson in `mbtiles\output.geojson`
 - Use [tippecanoe](https://github.com/mapbox/tippecanoe) to convert the output.geojson to a single .mbtile
 
-`tippecanoe -z 14 -Z 14 -pk -pf -f -o map.mbtiles output.geojson`
 
 You can serve these tiles using [tileserver-gl](https://github.com/klokantech/tileserver-gl)
-
 
 ### Tile Downloader Process
 Just a visual reference of how sequence of how tiles are downloaded
