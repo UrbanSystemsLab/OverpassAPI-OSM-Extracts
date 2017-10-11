@@ -1,4 +1,4 @@
-# Overpass API: OSM Extracts
+# Overpass API OSM Extracts
 *Steps to download OSM data using Overpass API*
 
 
