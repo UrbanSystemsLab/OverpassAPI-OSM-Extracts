@@ -6,13 +6,15 @@ This method simplifies the downloading process of very large OSM data through Ov
 
 OSM extracts from Overpass API may be preferred because it returns higher level of detail for building geometries in data rich cities like NYC. Otherwise, there are other sources to download the OSM data like through [Geofabrik Service](http://download.geofabrik.de/). Steps for that are documented [here](https://github.com/UrbanSystemsLab/Geofabrik-OSM-Extracts).
 
+![overpass-vs-geofabrik](img/overpass-geofabrik.jpg)
+
+
 ## Directory Structure
 ```sh 
 Root
 |--osm        				# Download directory for .osm files
 |--geojson    				# Directory for .osm => .geojson files
 |--geojson-merged     # Directory for single merged .geojson
-|--mbtiles 						# Directory for merged .geojson file => .mbtiles
 |
 |--download.js            # Download .osm tiles from Overpass-API
 |--osm-to-geojson.js      # convert .osm to .geojson files
@@ -99,6 +101,8 @@ db.features.aggregate([{ $match: {'properties.height': {$exists : 'true'}} },{ $
 Export the collection that contains the needed data out to a JSON Array
 
 ```sh
+mkdir mongoExport
+cd mongoExport
 mongoexport --db databaseName -c buildings --out "building_export.json" --jsonArray 
 ```
 
@@ -126,6 +130,9 @@ tippecanoe -pd -z 14 -n buildings -f -o buildings.mbtiles buildings.geojson
 
 These tiles can ber served locally using [tileserver-gl](https://github.com/klokantech/tileserver-gl)
 
-### Tile Downloader Process
-Just a visual reference of how sequence of how tiles are downloaded
+--- 
+
+## Tile Download Process
+A visual reference of how OSM data is downloaded by `download.js` as multiple tile extracts.
+
 ![tile-download.png](img/tile-download.png)
