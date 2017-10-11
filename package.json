@@ -9,11 +9,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async": "^2.5.0",
+    "bluebird": "^3.5.0",
     "geojson-stream": "0.0.1",
+    "mongodb": "^2.2.31",
+    "osmtogeojson": "^3.0.0-beta.0",
+    "shelljs": "^0.7.8",
     "single-line-log": "^1.1.2",
     "stream-concat": "^0.1.0",
-    "through2": "^2.0.3",
-    "osmtogeojson": "^3.0.0-beta.0",
-    "stream-concat": "^0.1.0"
+    "through2": "^2.0.3"
   }
 }

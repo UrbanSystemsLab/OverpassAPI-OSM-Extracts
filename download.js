@@ -1,98 +1,134 @@
-/*jshint esversion: 6 */
-var Promise = require('bluebird');
-var http = require('http');
-var fs = require('fs');
+// Overpass API Status: http://overpass-api.de/api/status
 
-var i = 0; // Tile counter
-var overpassBbox, url, dest;
+var http = require('http')
+var async = require('async')
+var fs = require('fs')
+var osmDirectory = './osm'
+var geoJsonDirectory = './geojson'
 
-//NYC Bounding Box NSEW
-//North Latitude:40.917577 South Latitude: 40.477399 East Longitude: -73.700272 West Longitude: -74.259090
-var bbox = {
-  N: 40.917577,
-  S: 40.477399,
-  E: -73.700272,
-  W: -74.259090
-};
+// Settings
+var config = require('./config.json')
+var bbox = config.bbox
+var tileSize = config.tileSize
 
-/*
-Origin is top right
-Move left till bbox.W.
-Go one tile down and start from the right.
-Move towards left at each iteration
-startTile is the first rightmost tile in each row.
-*/
+var tileCount = 0 // Tile counter
+var overpassBbox, url, dest, tile, startTile, stats, file, fileSizeInKB
 
-//Approximate TileSize
-var tileNS = 0.04; // Tile height
-var tileEW = 0.02; // Tile width
+// Create output directories
+if (!fs.existsSync(osmDirectory)) {
+	fs.mkdirSync(osmDirectory)
+}
+if (!fs.existsSync(geoJsonDirectory)) {
+	fs.mkdirSync(geoJsonDirectory)
+}
 
-//First tile
-var startTile = {
-  N: 40.917577,
-  E: -73.700272
-};
+// First tile: Top-Right Corner 
+startTile = {
+	N: bbox.N,
+	E: bbox.E,
+	S: bbox.N - tileSize,
+	W: bbox.E - tileSize
+}
 
-startTile.S = startTile.N - tileNS;
-startTile.W = startTile.E - tileNS;
-var tile = JSON.parse(JSON.stringify(startTile));
+// Create a queue object with concurrency 1
+var q = async.queue(function(tile, queueCallback) {
+	overpassBbox = tile.W + ',' + tile.S + ',' + tile.E + ',' + tile.N
+	url = 'http://overpass-api.de/api/map?bbox=' + overpassBbox
+	dest = './osm/map' + tileCount + '.osm'
 
+	async.retry({ times: 10, interval: function(retryCount) { return 20 * 1000 * Math.pow(2, retryCount) } }, function(cb, results) {
+		http.get(url, (response) => {
+			file = fs.createWriteStream(dest)
+			response.pipe(file)
 
-var promiseWhile = function(condition, action) {
-  var resolver = Promise.defer();
-  var loop = function() {
-    if (!condition()) return resolver.resolve();  // Resolving escapes the loop
-    return Promise.cast(action())
-      .then(loop)
-      .catch(resolver.reject);
-  };
-  process.nextTick(loop);
-  return resolver.promise;
-};
+			file.on('finish', function() {
+				stats = fs.statSync(dest)
+				fileSizeInKB = stats['size'] / 1000.0
 
-// promiseWhile loop credits: https://gist.github.com/victorquinn/8030190
-promiseWhile(() => {
-  // Condition for stopping
-  return ((tile.S > bbox.S));
-}, () => {
-  // The function to run, should return a promise
-  return new Promise(function(resolve, reject) {
-    overpassBbox = tile.W + "," + tile.S + "," + tile.E + "," + tile.N;
-    url = "http://overpass-api.de/api/map?bbox=" + overpassBbox;
-    dest = "./osm/map" + i + ".osm";
+				// Check if rate limit was hit, in which case HTML response is send back instead of OSM data
+				if (fileSizeInKB > 1) {
+					tileCount++
+					file.close(() => {
+						cb(null, fileSizeInKB)
+					})
+				} else {
+					// Check if file is HTML
+					file.close(() => {
+						fs.readFile(dest, 'utf8', function(err, data) {
+							if (err) {
+								return console.error(err)
+							}
+							if (data.search('text/html') !== -1) {
+								// If yes then error due to rate limit
+								cb(new Error('Filesize too low. Probably hit rate limit')) // Async Retry in this case
+							} else {
+								// No Features: Filesize might be small because there were no features
+								tileCount++
+								cb(null, fileSizeInKB)
+							}
+						})
+					}) // End of file close
+				}
+			}) // End of file finish
+		}).on('error', function(err) { // Handle errors
+			fs.unlink(dest) // Delete the file async. (But we don't check the result)
+			console.error(err.message)
+		}) // End of HTTP GET Request
+	}, function(err, fileSizeInKB) {
+		if (err) console.error(err)
+		else console.log(`Tile ${tileCount} size: ${fileSizeInKB}KB`)
+		queueCallback() // Process next tile in queue
+	})
+}, 1) // Limit concurrency to 1
 
-    var file = fs.createWriteStream(dest);
-    var request = http.get(url, function(response) {
-      response.pipe(file);
-      file.on('finish', function() {
-        file.close(); // close() is async, call cb after close completes.
-        console.log("Done: Tile " + i);
-        i++;
-        updateTile();
-        resolve();
-      });
-    }).on('error', function(err) { // Handle errors
-      fs.unlink(dest); // Delete the file async. (But we don't check the result)
-      console.log(err.message);
-    });
-  });
-}).then(function() {
-  //This will run after completion of the promiseWhile Promise!
-  console.log("Total Tiles Downloaded: " + i);
-});
+q.drain = function() {
+	console.log('All items have been downloaded')
+}
 
-function updateTile() {
-  if (tile.W > bbox.W) {
-    // Shift Left
-    tile.E = tile.E - tileEW;
-    tile.W = tile.W - tileEW;
-  } else {
-    // Shift Down from startTile
-    tile = JSON.parse(JSON.stringify(startTile));
-    tile.N = startTile.N - tileNS;
-    tile.S = startTile.S - tileNS;
+downloadTiles(bbox, tileSize, startTile)
 
-    //reset startTile
-    startTile = JSON.parse(JSON.stringify(tile));
-  }
+function downloadTiles(bbox, tileSize, startTile) {
+	tile = JSON.parse(JSON.stringify(startTile))
+	// Add to Async Queue
+	q.push(tile, (err) => {
+		if (err) console.error(err)
+		else console.log(`Downloaded tile ${tileCount} ` + JSON.stringify(tile))
+		addNext()
+	})
+
+	function addNext() {
+		if (tile.S < bbox.S) {
+			console.log('End of all tiles')
+			// End of tiles
+			return null
+		} else {
+			if (tile.W > bbox.W) {
+				// Shift Left
+				tile.E = tile.E - tileSize
+				tile.W = tile.W - tileSize
+
+				// Add to Async Queue
+				q.push(tile, (err) => {
+					if (err) console.error(err)
+					else console.log(`Downloaded tile ${tileCount} ` + JSON.stringify(tile))
+					addNext()
+				})
+			} else {
+				// Shift Down from startTile
+				tile = JSON.parse(JSON.stringify(startTile))
+				tile.N = startTile.N - tileSize
+				tile.S = startTile.S - tileSize
+
+				// reset startTile
+				startTile = JSON.parse(JSON.stringify(tile))
+				
+				// Add to Async Queue
+				q.push(startTile, (err) => {
+					if (err) console.error(err)
+					else console.log(`Downloaded tile ${tileCount} ` + JSON.stringify(startTile))
+					addNext()
+				})
+			}
+		}
+	}
 }

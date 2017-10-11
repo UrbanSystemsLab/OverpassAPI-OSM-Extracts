@@ -1,0 +1,13 @@
+{
+	"osmDirectory": "./osm",
+	"geoJsonDirectory": "./geojson",
+	"outputDirectory": "./geojson-merged",
+	"tileSize": 0.1,
+	"bbox":
+	{
+		"N": 41.2035,
+		"S": 40.4079,
+		"E": -71.7613,
+		"W": -74.3857
+	}
+}
