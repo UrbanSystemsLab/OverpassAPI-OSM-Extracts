@@ -99,6 +99,22 @@ db.features.aggregate([{ $match: {'properties.height': {$exists : 'true'}} },{ $
 
 ```
 
+**Note**: Some third-party apps and libraries expect strict data type usage. For example, Mapbox-gl-js library expects height (for 3D-building-extrusion) as number instead of string. Use the following steps to convert the field in MongoDB to correct data type
+
+```sh
+# Count the features that have height encoded as string
+db.buildings.find({'properties.height' : {$type : 2} }).count()
+
+# Convert string data type to float 
+db.buildings.find({'properties.height': {$exists : 'true'}}).forEach(function(obj) { 
+	db.buildings.update({_id : obj._id},
+	{
+		$set : {'properties.height' : parseFloat(obj.properties.height)}
+	});
+});
+
+```
+
 ### 6. Export Buildings
 
 Export the collection that contains the needed data out to a JSON Array
