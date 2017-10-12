@@ -99,7 +99,7 @@ db.features.aggregate([{ $match: {'properties.height': {$exists : 'true'}} },{ $
 
 ```
 
-**Note**: Some third-party apps and libraries expect strict data type usage. For example, Mapbox-gl-js library expects height (for 3D-building-extrusion) as number instead of string. Use the following steps to convert the field in MongoDB to correct data type
+⚠️ **Note**: Some third-party apps and libraries expect strict data type usage. For example, Mapbox-gl-js library expects height (for 3D-building-extrusion) as number instead of string. Use the following steps to convert the field in MongoDB to correct data type
 
 ```sh
 # Count the features that have height encoded as string
