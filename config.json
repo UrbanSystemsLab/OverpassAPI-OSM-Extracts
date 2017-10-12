@@ -2,7 +2,7 @@
 	"osmDirectory": "./osm",
 	"geoJsonDirectory": "./geojson",
 	"outputDirectory": "./geojson-merged",
-	"tileSize": 0.1,
+	"tileSize": 0.07,
 	"bbox":
 	{
 		"N": 41.2035,

@@ -8,6 +8,17 @@ OSM extracts from Overpass API may be preferred because it returns higher level 
 
 ![overpass-vs-geofabrik](img/overpass-geofabrik.jpg)
 
+## Requirements
+
+- Install osmtogeojson npm module globally `npm install -g osmtogeojson`
+- Clone this repository to obtain the necessary scripts. 
+
+```sh 
+git clone https://github.com/UrbanSystemsLab/OverpassAPI-OSM-Extracts.git .
+npm install -g osmtogeojson
+npm install
+```
+
 
 ## Directory Structure
 ```sh 
@@ -35,18 +46,6 @@ Root
 - Convert to GeoJSON to SHP File
 - Convert GeoJSON to MBTiles
 
-## Requirements
-
-Clone this repository to obtain the necessary scripts. 
-
-```sh 
-git clone https://github.com/UrbanSystemsLab/OverpassAPI-OSM-Extracts.git .
-cd OverpassAPI-OSM-Extracts
-npm install -g osmtogeojson
-```
-
-**NOTE**: Before running this script please install osmtogeojson npm module globally if you do not have one. Use command `npm install -g osmtogeojson`
-
 ## Process
 
 ### 1. Download OSM Tiles
@@ -60,7 +59,10 @@ If you are still hitting the rate limit, you can increase the retry interval in 
 ```js
 async.retry({ times: 10, interval: function(retryCount) { return 20 * 1000 * Math.pow(2, retryCount) } }, function(cb, results) {...})
 
+// Change the value interval 20 * 1000 * Math.pow(2, retryCount) 
 ```
+
+Alternatively, decrease the `tileSize` in `config.json`.
 
 ### 2. Convert OSM tiles to GeoJSON tiles
 This will convert all the `.osm` files to `.geojson` format
@@ -77,9 +79,10 @@ node geojson-merge.js
 ```
 
 ### 4. Import to mongoDB
-Import all the features in the merged GeoJSON file to a MongoDB collection.
+Import all the features in the merged GeoJSON file to a MongoDB collection. Replace 'databaseName' with your MongoDB database name.
 
 ```sh
+ cd geojson-merged
  jq  ".features" --compact-output output.geojson > features.json
  mongoimport --db databaseName -c features --file "features.json" --jsonArray
 ```
@@ -101,8 +104,6 @@ db.features.aggregate([{ $match: {'properties.height': {$exists : 'true'}} },{ $
 Export the collection that contains the needed data out to a JSON Array
 
 ```sh
-mkdir mongoExport
-cd mongoExport
 mongoexport --db databaseName -c buildings --out "building_export.json" --jsonArray 
 ```
 
