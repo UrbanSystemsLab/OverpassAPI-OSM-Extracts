@@ -90,12 +90,20 @@ Import all the features in the merged GeoJSON file to a MongoDB collection. Repl
 ### 5. Aggregate buildings in MongoDB
 Run the mongo shell using mongod. In another shell run mongo command to perform the following to inspect and aggregate the necessary data.
 
-```sh
-# Count the number of features that have height (Building & Building Parts)
-db.features.find({'properties.height': {$exists : 'true'}}).count()
+Aggregate buildings from `features` collection into `buildings` collection. *Optionally*, add some arbitrary height to buildings that are missing the `properties.height` attribute.
 
-# Export all buildings to 'buildings' collection
-db.features.aggregate([{ $match: {'properties.height': {$exists : 'true'}} },{ $out: "buildings" }])
+```sh
+# Count features with properties = Buildings:True OR Height:True
+db.features.find({ $or : [{'properties.building' : {$exists : true} },{'properties.height' : {$exists : true} }]}).count()
+
+# Aggregate those features to buildings collection
+db.features.aggregate([{ $match: {$or : [{'properties.building' : {$exists : true} },{'properties.height' : {$exists : true} }]} },{ $out: "buildings" }])
+
+# Count buildings that are missing height attribute
+db.buildings.count({'properties.height': {$exists : false}})
+
+# Set default height for those buildings to '3'
+db.buildings.find({'properties.height': {$exists : false}}).forEach(function(obj) {db.buildings.update({_id : obj._id},{$set : {'properties.height' : parseFloat('3')}});});
 
 ```
 
