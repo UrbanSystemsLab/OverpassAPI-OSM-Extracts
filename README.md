@@ -150,7 +150,7 @@ ogr2ogr -f "ESRI Shapefile" data.shp "buildings.geojson" -skipfailures
 Use [tippecanoe](https://github.com/mapbox/tippecanoe) to convert the merged GeoJSON file to a MBTiles
 
 ```sh
-tippecanoe -pd -z 14 -n buildings -f -o buildings.mbtiles buildings.geojson
+tippecanoe -pd -z 14 -n buildings-tileset-name -l buildings-layer-name -f -o buildings.mbtiles buildings.geojson
 ```
 
 These tiles can ber served locally using [tileserver-gl](https://github.com/klokantech/tileserver-gl)
